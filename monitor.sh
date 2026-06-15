@@ -33,12 +33,13 @@ send_to_google_chat() {
     local appid="$3"
     local question="$4"
 
-    local message="[${appid}]
-        Time: ${timestamp}
-        User: ${userid}
+    local message="*App:* ${appid}
 
-        Question:
-        ${question}
+*Time:* ${timestamp}
+*User:* ${userid}
+
+*Question:*
+${question}
     "
 
     if [ -z "${GOOGLE_CHAT_WEBHOOK:-}" ]; then
