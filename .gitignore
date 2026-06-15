@@ -1,0 +1,4 @@
+config.env
+messages.log
+monitor.log
+processed_hashes.txt
