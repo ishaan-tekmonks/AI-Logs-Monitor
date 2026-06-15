@@ -8,7 +8,7 @@ touch "$STATE_FILE"
 touch "$APP_LOG"
 
 log() {
-echo "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$APP_LOG"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$APP_LOG"
 }
 
 within_time_window() {
@@ -34,18 +34,21 @@ send_to_google_chat() {
     local question="$4"
 
     local message="[${appid}]
-Time: ${timestamp}
-User: ${userid}
+        Time: ${timestamp}
+        User: ${userid}
 
-Question:
-${question}
-"
+        Question:
+        ${question}
+    "
 
     if [ -z "${GOOGLE_CHAT_WEBHOOK:-}" ]; then
 
-        {
-            echo "=================================================="
-            echo "$message"
+        { 
+            echo "==================================================" 
+            echo "$(date '+%Y-%m-%d %H:%M:%S')" 
+            echo "[MESSAGE LOGGED TO LOCAL FILE ONLY]" 
+            echo 
+            echo "$message" 
         } >> "$MESSAGE_LOG"
 
         return 0
@@ -54,12 +57,34 @@ ${question}
     payload=$(printf '{"text":"%s"}' \
         "$(echo "$message" | sed ':a;N;$!ba;s/\n/\\n/g')")
 
-    curl -s \
-        --fail \
-        -X POST \
-        -H "Content-Type: application/json" \
-        -d "$payload" \
-        "$GOOGLE_CHAT_WEBHOOK" >/dev/null
+    if curl -s \
+    --fail \
+    -X POST \
+    -H "Content-Type: application/json" \
+    -d "$payload" \
+    "$GOOGLE_CHAT_WEBHOOK" >/dev/null
+    then
+
+        {
+            echo "=================================================="
+            echo "$(date '+%Y-%m-%d %H:%M:%S')"
+            echo "[MESSAGE SENT TO GOOGLE CHAT]"
+            echo
+            echo "$message"
+        } >> "$MESSAGE_LOG"
+
+        return 0
+    fi
+
+    {
+        echo "=================================================="
+        echo "$(date '+%Y-%m-%d %H:%M:%S')"
+        echo "[GOOGLE CHAT DELIVERY FAILED]"
+        echo
+        echo "$message"
+    } >> "$MESSAGE_LOG"
+
+    return 1
 }
 
 
