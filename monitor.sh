@@ -7,6 +7,12 @@ source ./config.env
 touch "$STATE_FILE"
 touch "$APP_LOG"
 
+touch "$OFFSET_FILE"
+
+if [ ! -s "$OFFSET_FILE" ]; then
+    echo 0 > "$OFFSET_FILE"
+fi
+
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$APP_LOG"
 }
@@ -90,7 +96,17 @@ ${question}
 
 
 
-grep "<MONITOR>" "$LOG_FILE" | while read -r line
+current_size=$(stat -c%s "$LOG_FILE")
+
+last_offset=$(cat "$OFFSET_FILE" 2>/dev/null || echo 0)
+
+# Handle log rotation/truncation
+if [ "$last_offset" -gt "$current_size" ]; then
+    last_offset=0
+fi
+
+tail -c +"$((last_offset + 1))" "$LOG_FILE" | \
+grep "<MONITOR>" | while read -r line
 do
 
 ```
@@ -131,3 +147,5 @@ fi
 ```
 
 done
+
+echo "$current_size" > "$OFFSET_FILE"
